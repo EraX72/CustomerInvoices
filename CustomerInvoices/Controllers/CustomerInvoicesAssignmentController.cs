@@ -1,6 +1,8 @@
 ﻿using CustomerInvoices.Data;
 using CustomerInvoices.DTOs;
 using Microsoft.AspNetCore.Mvc;
+using System;
+using System.Linq;
 
 namespace CustomerInvoices.Controllers
 {
@@ -17,43 +19,122 @@ namespace CustomerInvoices.Controllers
         [HttpGet("customer/{id}")]
         public IActionResult GetServicesForCustomer(int id)
         {
-            // Implement logic to get services associated with a specific customer
-            var services = _context.Invoices.Where(i => i.CustomerId == id).Select(i => new ServiceDTO { /* Map properties */ }).ToList();
-            return Ok(services);
+            try
+            {
+                var services = _context.Invoices
+                    .Where(i => i.CustomerId == id)
+                    .Select(i => new ServiceDTO
+                    {
+                        ServiceId = i.ServiceId,
+                        ServiceName = i.Service.ServiceName,
+                        Description = i.Service.Description,
+                        Price = i.Service.Price,
+                        Duration = i.Service.Duration
+                    })
+                    .ToList();
+
+                return Ok(services);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
         }
 
         [HttpGet("service/{id}")]
         public IActionResult GetCustomersForService(int id)
         {
-            // Implement logic to get customers associated with a specific service
-            var customers = _context.Invoices.Where(i => i.ServiceId == id).Select(i => new CustomerDTO { /* Map properties */ }).ToList();
-            return Ok(customers);
+            try
+            {
+                var customers = _context.Invoices
+                    .Where(i => i.ServiceId == id)
+                    .Select(i => new CustomerDTO
+                    {
+                        CustomerId = i.CustomerId,
+                        FirstName = i.Customer.FirstName,
+                        LastName = i.Customer.LastName,
+                        Email = i.Customer.Email,
+                        Address = i.Customer.Address
+                    })
+                    .ToList();
+
+                return Ok(customers);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
         }
 
         [HttpPost("assign")]
         public IActionResult AssignCustomerToService([FromBody] AssignmentDTO assignmentDTO)
         {
-            // Implement logic to assign a customer to a service
-            // You may need to validate the existence of the customer and service
-            // and handle cases where the association already exists
-            // Example: _context.Invoices.Add(new Invoice { CustomerId = assignmentDTO.CustomerId, ServiceId = assignmentDTO.ServiceId });
-            // _context.SaveChanges();
-            return Ok();
+            try
+            {
+               
+                var existingCustomer = _context.Customers.Find(assignmentDTO.CustomerId);
+                var existingService = _context.Services.Find(assignmentDTO.ServiceId);
+
+                if (existingCustomer == null || existingService == null)
+                {
+                    return NotFound("Customer or Service not found.");
+                }
+
+                
+                if (_context.Invoices.Any(i => i.CustomerId == assignmentDTO.CustomerId && i.ServiceId == assignmentDTO.ServiceId))
+                {
+                    return BadRequest("Customer already assigned to this service.");
+                }
+
+                
+                var newInvoice = new Invoice
+                {
+                    CustomerId = assignmentDTO.CustomerId,
+                    ServiceId = assignmentDTO.ServiceId,
+                    InvoiceDate = DateTime.UtcNow,
+                    TotalAmount = existingService.Price 
+                };
+
+                _context.Invoices.Add(newInvoice);
+                _context.SaveChanges();
+
+                return Ok("Customer assigned to service successfully.");
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
         }
 
         [HttpDelete("remove/customer/{customerId}/service/{serviceId}")]
         public IActionResult RemoveCustomerServiceAssociation(int customerId, int serviceId)
         {
-            // Implement logic to remove the association between a customer and a service
-            var invoice = _context.Invoices.FirstOrDefault(i => i.CustomerId == customerId && i.ServiceId == serviceId);
-            if (invoice == null)
+            try
             {
-                return NotFound();
+                var invoice = _context.Invoices
+                    .FirstOrDefault(i => i.CustomerId == customerId && i.ServiceId == serviceId);
+
+                if (invoice == null)
+                {
+                    return NotFound("Association not found.");
+                }
+
+                _context.Invoices.Remove(invoice);
+                _context.SaveChanges();
+
+                return NoContent();
             }
-            _context.Invoices.Remove(invoice);
-            _context.SaveChanges();
-            return NoContent();
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
+
+        private IActionResult HandleException(Exception ex)
+        {
+        
+
+            return StatusCode(500, "An unexpected error occurred. Please try again later.");
         }
     }
-
 }
