@@ -1,6 +1,9 @@
 ﻿using CustomerInvoices.Data;
-using CustomerInvoices.DTOs;
+using CustomerInvoices.DTOs.Requests;  
+using CustomerInvoices.DTOs.Responses;  
 using Microsoft.AspNetCore.Mvc;
+using System;
+using System.Linq;
 
 namespace CustomerInvoices.Controllers
 {
@@ -18,7 +21,7 @@ namespace CustomerInvoices.Controllers
         public IActionResult GetAllInvoices()
         {
             var invoices = _context.Invoices.ToList();
-            var invoiceDTOs = invoices.Select(i => new InvoiceDTO { InvoiceId = i.InvoiceId, CustomerId = i.CustomerId, ServiceId = i.ServiceId, InvoiceDate = i.InvoiceDate, TotalAmount = i.TotalAmount }).ToList();
+            var invoiceDTOs = invoices.Select(i => new InvoiceResponseDTO { InvoiceId = i.InvoiceId, CustomerId = i.CustomerId, ServiceId = i.ServiceId, InvoiceDate = i.InvoiceDate, TotalAmount = i.TotalAmount }).ToList();
             return Ok(invoiceDTOs);
         }
 
@@ -30,22 +33,22 @@ namespace CustomerInvoices.Controllers
             {
                 return NotFound();
             }
-            var invoiceDTO = new InvoiceDTO { InvoiceId = invoice.InvoiceId, CustomerId = invoice.CustomerId, ServiceId = invoice.ServiceId, InvoiceDate = invoice.InvoiceDate, TotalAmount = invoice.TotalAmount };
+            var invoiceDTO = new InvoiceResponseDTO { InvoiceId = invoice.InvoiceId, CustomerId = invoice.CustomerId, ServiceId = invoice.ServiceId, InvoiceDate = invoice.InvoiceDate, TotalAmount = invoice.TotalAmount };
             return Ok(invoiceDTO);
         }
 
         [HttpPost]
-        public IActionResult CreateInvoice([FromBody] InvoiceDTO invoiceDTO)
+        public IActionResult CreateInvoice([FromBody] InvoiceRequestDTO invoiceDTO)
         {
             var newInvoice = new Invoice { CustomerId = invoiceDTO.CustomerId, ServiceId = invoiceDTO.ServiceId, InvoiceDate = invoiceDTO.InvoiceDate, TotalAmount = invoiceDTO.TotalAmount };
             _context.Invoices.Add(newInvoice);
             _context.SaveChanges();
-            var createdInvoiceDTO = new InvoiceDTO { InvoiceId = newInvoice.InvoiceId, CustomerId = newInvoice.CustomerId, ServiceId = newInvoice.ServiceId, InvoiceDate = newInvoice.InvoiceDate, TotalAmount = newInvoice.TotalAmount };
+            var createdInvoiceDTO = new InvoiceResponseDTO { InvoiceId = newInvoice.InvoiceId, CustomerId = newInvoice.CustomerId, ServiceId = newInvoice.ServiceId, InvoiceDate = newInvoice.InvoiceDate, TotalAmount = newInvoice.TotalAmount };
             return CreatedAtAction(nameof(GetInvoiceById), new { id = newInvoice.InvoiceId }, createdInvoiceDTO);
         }
 
         [HttpPut("{id}")]
-        public IActionResult UpdateInvoice(int id, [FromBody] InvoiceDTO invoiceDTO)
+        public IActionResult UpdateInvoice(int id, [FromBody] InvoiceRequestDTO invoiceDTO)
         {
             var existingInvoice = _context.Invoices.Find(id);
             if (existingInvoice == null)
@@ -73,5 +76,4 @@ namespace CustomerInvoices.Controllers
             return NoContent();
         }
     }
-
 }

@@ -1,8 +1,7 @@
-﻿namespace CustomerInvoices.DTOs
+﻿namespace CustomerInvoices.DTOs.Requests
 {
-    public class ServiceDTO
+    public class ServiceRequestDTO
     {
-        public int ServiceId { get; set; }
         public string ServiceName { get; set; }
         public string Description { get; set; }
         public float Price { get; set; }

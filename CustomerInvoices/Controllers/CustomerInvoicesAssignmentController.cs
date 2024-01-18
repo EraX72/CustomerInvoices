@@ -1,5 +1,6 @@
 ﻿using CustomerInvoices.Data;
-using CustomerInvoices.DTOs;
+using CustomerInvoices.DTOs.Requests;  
+using CustomerInvoices.DTOs.Responses;  
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Linq;
@@ -23,7 +24,7 @@ namespace CustomerInvoices.Controllers
             {
                 var services = _context.Invoices
                     .Where(i => i.CustomerId == id)
-                    .Select(i => new ServiceDTO
+                    .Select(i => new ServiceResponseDTO
                     {
                         ServiceId = i.ServiceId,
                         ServiceName = i.Service.ServiceName,
@@ -48,7 +49,7 @@ namespace CustomerInvoices.Controllers
             {
                 var customers = _context.Invoices
                     .Where(i => i.ServiceId == id)
-                    .Select(i => new CustomerDTO
+                    .Select(i => new CustomerResponseDTO
                     {
                         CustomerId = i.CustomerId,
                         FirstName = i.Customer.FirstName,
@@ -67,11 +68,10 @@ namespace CustomerInvoices.Controllers
         }
 
         [HttpPost("assign")]
-        public IActionResult AssignCustomerToService([FromBody] AssignmentDTO assignmentDTO)
+        public IActionResult AssignCustomerToService([FromBody] AssignmentRequestDTO assignmentDTO)
         {
             try
             {
-               
                 var existingCustomer = _context.Customers.Find(assignmentDTO.CustomerId);
                 var existingService = _context.Services.Find(assignmentDTO.ServiceId);
 
@@ -80,19 +80,17 @@ namespace CustomerInvoices.Controllers
                     return NotFound("Customer or Service not found.");
                 }
 
-                
                 if (_context.Invoices.Any(i => i.CustomerId == assignmentDTO.CustomerId && i.ServiceId == assignmentDTO.ServiceId))
                 {
                     return BadRequest("Customer already assigned to this service.");
                 }
 
-                
                 var newInvoice = new Invoice
                 {
                     CustomerId = assignmentDTO.CustomerId,
                     ServiceId = assignmentDTO.ServiceId,
                     InvoiceDate = DateTime.UtcNow,
-                    TotalAmount = existingService.Price 
+                    TotalAmount = existingService.Price
                 };
 
                 _context.Invoices.Add(newInvoice);
@@ -132,8 +130,6 @@ namespace CustomerInvoices.Controllers
 
         private IActionResult HandleException(Exception ex)
         {
-        
-
             return StatusCode(500, "An unexpected error occurred. Please try again later.");
         }
     }

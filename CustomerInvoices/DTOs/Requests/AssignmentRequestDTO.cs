@@ -1,6 +1,6 @@
-﻿namespace CustomerInvoices.DTOs
+﻿namespace CustomerInvoices.DTOs.Requests
 {
-    public class AssignmentDTO
+    public class AssignmentRequestDTO
     {
         public int CustomerId { get; set; }
         public int ServiceId { get; set; }

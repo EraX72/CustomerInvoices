@@ -1,6 +1,9 @@
 ﻿using CustomerInvoices.Data;
-using CustomerInvoices.DTOs;
+using CustomerInvoices.DTOs.Requests;
+using CustomerInvoices.DTOs.Responses;
 using Microsoft.AspNetCore.Mvc;
+using System;
+using System.Linq;
 
 namespace CustomerInvoices.Controllers
 {
@@ -17,61 +20,138 @@ namespace CustomerInvoices.Controllers
         [HttpGet]
         public IActionResult GetAllCustomers()
         {
-            var customers = _context.Customers.ToList();
-            var customerDTOs = customers.Select(c => new CustomerDTO { CustomerId = c.CustomerId, FirstName = c.FirstName, LastName = c.LastName, Email = c.Email, Address = c.Address }).ToList();
-            return Ok(customerDTOs);
+            try
+            {
+                var customers = _context.Customers.ToList();
+                var customerDTOs = customers.Select(c => new CustomerResponseDTO
+                {
+                    CustomerId = c.CustomerId,
+                    FirstName = c.FirstName,
+                    LastName = c.LastName,
+                    Email = c.Email,
+                    Address = c.Address
+                }).ToList();
+
+                return Ok(customerDTOs);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
         }
 
         [HttpGet("{id}")]
         public IActionResult GetCustomerById(int id)
         {
-            var customer = _context.Customers.Find(id);
-            if (customer == null)
+            try
             {
-                return NotFound();
+                var customer = _context.Customers.Find(id);
+                if (customer == null)
+                {
+                    return NotFound();
+                }
+
+                var customerDTO = new CustomerResponseDTO
+                {
+                    CustomerId = customer.CustomerId,
+                    FirstName = customer.FirstName,
+                    LastName = customer.LastName,
+                    Email = customer.Email,
+                    Address = customer.Address
+                };
+
+                return Ok(customerDTO);
             }
-            var customerDTO = new CustomerDTO { CustomerId = customer.CustomerId, FirstName = customer.FirstName, LastName = customer.LastName, Email = customer.Email, Address = customer.Address };
-            return Ok(customerDTO);
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
         }
 
         [HttpPost]
-        public IActionResult CreateCustomer([FromBody] CustomerDTO customerDTO)
+        public IActionResult CreateCustomer([FromBody] CustomerRequestDTO customerDTO)
         {
-            var newCustomer = new Customer { FirstName = customerDTO.FirstName, LastName = customerDTO.LastName, Email = customerDTO.Email, Address = customerDTO.Address };
-            _context.Customers.Add(newCustomer);
-            _context.SaveChanges();
-            var createdCustomerDTO = new CustomerDTO { CustomerId = newCustomer.CustomerId, FirstName = newCustomer.FirstName, LastName = newCustomer.LastName, Email = newCustomer.Email, Address = newCustomer.Address };
-            return CreatedAtAction(nameof(GetCustomerById), new { id = newCustomer.CustomerId }, createdCustomerDTO);
+            try
+            {
+                var newCustomer = new Customer
+                {
+                    FirstName = customerDTO.FirstName,
+                    LastName = customerDTO.LastName,
+                    Email = customerDTO.Email,
+                    Address = customerDTO.Address
+                };
+
+                _context.Customers.Add(newCustomer);
+                _context.SaveChanges();
+
+                var createdCustomerDTO = new CustomerResponseDTO
+                {
+                    CustomerId = newCustomer.CustomerId,
+                    FirstName = newCustomer.FirstName,
+                    LastName = newCustomer.LastName,
+                    Email = newCustomer.Email,
+                    Address = newCustomer.Address
+                };
+
+                return CreatedAtAction(nameof(GetCustomerById), new { id = newCustomer.CustomerId }, createdCustomerDTO);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
         }
 
         [HttpPut("{id}")]
-        public IActionResult UpdateCustomer(int id, [FromBody] CustomerDTO customerDTO)
+        public IActionResult UpdateCustomer(int id, [FromBody] CustomerRequestDTO customerDTO)
         {
-            var existingCustomer = _context.Customers.Find(id);
-            if (existingCustomer == null)
+            try
             {
-                return NotFound();
+                var existingCustomer = _context.Customers.Find(id);
+                if (existingCustomer == null)
+                {
+                    return NotFound();
+                }
+
+                existingCustomer.FirstName = customerDTO.FirstName;
+                existingCustomer.LastName = customerDTO.LastName;
+                existingCustomer.Email = customerDTO.Email;
+                existingCustomer.Address = customerDTO.Address;
+                _context.SaveChanges();
+
+                return NoContent();
             }
-            existingCustomer.FirstName = customerDTO.FirstName;
-            existingCustomer.LastName = customerDTO.LastName;
-            existingCustomer.Email = customerDTO.Email;
-            existingCustomer.Address = customerDTO.Address;
-            _context.SaveChanges();
-            return NoContent();
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
         }
 
         [HttpDelete("{id}")]
         public IActionResult DeleteCustomer(int id)
         {
-            var customer = _context.Customers.Find(id);
-            if (customer == null)
+            try
             {
-                return NotFound();
+                var customer = _context.Customers.Find(id);
+                if (customer == null)
+                {
+                    return NotFound();
+                }
+
+                _context.Customers.Remove(customer);
+                _context.SaveChanges();
+
+                return NoContent();
             }
-            _context.Customers.Remove(customer);
-            _context.SaveChanges();
-            return NoContent();
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
+
+        private IActionResult HandleException(Exception ex)
+        {
+          
+            return StatusCode(500, "An unexpected error occurred. Please try again later.");
         }
     }
-
 }

@@ -1,8 +1,7 @@
-﻿namespace CustomerInvoices.DTOs
+﻿namespace CustomerInvoices.DTOs.Requests
 {
-    public class InvoiceDTO
+    public class InvoiceRequestDTO
     {
-        public int InvoiceId { get; set; }
         public int CustomerId { get; set; }
         public int ServiceId { get; set; }
         public DateTime InvoiceDate { get; set; }

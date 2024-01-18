@@ -1,6 +1,6 @@
-﻿namespace CustomerInvoices.DTOs
+﻿namespace CustomerInvoices.DTOs.Responses
 {
-    public class CustomerDTO
+    public class CustomerResponseDTO
     {
         public int CustomerId { get; set; }
         public string FirstName { get; set; }
